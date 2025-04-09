@@ -9,6 +9,9 @@
 *.md
 *build*
 *installations*
+config/
+*social*
+
 # Logs
 logs
 *.log
