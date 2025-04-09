@@ -1,3 +1,14 @@
+.rionaaiagent492020829/
+*backend*
+*templates*
+*env*
+*learn*
+*package*
+*.json
+*README*
+*.md
+*build*
+
 # Logs
 logs
 *.log
