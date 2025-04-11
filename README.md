@@ -1,10 +1,14 @@
-## Riona-AI-Agent 🌸
+## Instagram-AI-Agent 🌸
 
+<<<<<<< HEAD
 
 
 Riona-AI-Agent is an AI-powered automation tool designed for **Instagram** to automate social media interactions such as posting, liking, and commenting. It leverages advanced AI models to generate engaging content, automate interactions, and manage Instagram accounts efficiently.
+=======
+Instagram-AI-Agent is an AI-powered automation tool designed for **Instagram** to automate social media interactions such as posting, liking, and commenting. It leverages advanced AI models to generate engaging content, automate interactions, and manage Instagram accounts efficiently.
+>>>>>>> 76621fa82e195700e994be23f264b742756705f3
 
-Before using the automation features, you can personalize the agent by uploading your content, including:
+Before using the automation features, you can personalize the agent by training with the following, including:
 
 - **YouTube Video URL** 🎥
 - **Audio File** 🎙️
@@ -28,8 +32,8 @@ Before using the automation features, you can personalize the agent by uploading
 1. **Clone the repository**:
 
    ```sh
-   git clone https://github.com/david-patrick-chuks/Riona-AI-Agent.git
-   cd Riona-AI-Agent
+   git clone https://github.com/david-patrick-chuks/Instagram-AI-Agent.git
+   cd Instagram-AI-Agent
    ```
 
 2. **Install dependencies**:
@@ -48,8 +52,7 @@ Before using the automation features, you can personalize the agent by uploading
    Xpassword= #Twitter password
 
    MONGODB_URI= #MongoDB URI
-
-```
+   ```
 
 ## Usage
 

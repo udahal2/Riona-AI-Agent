@@ -1,4 +1,3 @@
-
 import { Browser, DEFAULT_INTERCEPT_RESOLUTION_PRIORITY } from "puppeteer";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
@@ -20,6 +19,7 @@ puppeteer.use(
     })
 );
 
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function runInstagram() {
     const server = new Server({ port: 8000 });
@@ -63,14 +63,18 @@ async function runInstagram() {
     // Navigate to the Instagram homepage
     await page.goto("https://www.instagram.com/");
 
-    // Interact with the first post
-    await interactWithPosts(page);
-
-    // Close the browser
-    await browser.close();
-    await server.close(true); // Stop the proxy server and close connections
+    // Continuously interact with posts without closing the browser
+    while (true) {
+         await interactWithPosts(page);
+         logger.info("Iteration complete, waiting 30 seconds before refreshing...");
+         await delay(30000);
+         try {
+             await page.reload({ waitUntil: "networkidle2" });
+         } catch (e) {
+             logger.warn("Error reloading page, continuing iteration: " + e);
+         }
+    }
 }
-
 
 const loginWithCredentials = async (page: any, browser: Browser) => {
     try {
@@ -105,8 +109,8 @@ async function interactWithPosts(page: any) {
 
             // Check if the post exists
             if (!(await page.$(postSelector))) {
-                console.log("No more posts found. Exiting loop...");
-                break;
+                console.log("No more posts found. Ending iteration...");
+                return;
             }
 
             const likeButtonSelector = `${postSelector} svg[aria-label="Like"]`;
@@ -118,6 +122,7 @@ async function interactWithPosts(page: any) {
             if (ariaLabel === "Like") {
                 console.log(`Liking post ${postIndex}...`);
                 await likeButton.click();
+                await page.keyboard.press("Enter");
                 console.log(`Post ${postIndex} liked.`);
             } else if (ariaLabel === "Unlike") {
                 console.log(`Post ${postIndex} is already liked.`);
@@ -142,14 +147,12 @@ async function interactWithPosts(page: any) {
             const moreLink = await page.$(moreLinkSelector);
             if (moreLink) {
                 console.log(`Expanding caption for post ${postIndex}...`);
-                await moreLink.click(); // Click the '...more' link to expand the caption
+                await moreLink.click();
                 const expandedCaption = await captionElement.evaluate(
                     (el: HTMLElement) => el.innerText
                 );
-                console.log(
-                    `Expanded Caption for post ${postIndex}: ${expandedCaption}`
-                );
-                caption = expandedCaption; // Update caption with expanded content
+                console.log(`Expanded Caption for post ${postIndex}: ${expandedCaption}`);
+                caption = expandedCaption;
             }
 
             // Comment on the post
@@ -159,11 +162,16 @@ async function interactWithPosts(page: any) {
                 console.log(`Commenting on post ${postIndex}...`);
                 const prompt = `Craft a thoughtful, engaging, and mature reply to the following post: "${caption}". Ensure the reply is relevant, insightful, and adds value to the conversation. It should reflect empathy and professionalism, and avoid sounding too casual or superficial. also it should be 300 characters or less. and it should not go against instagram Community Standards on spam. so you will have to try your best to humanize the reply`;
                 const schema = getInstagramCommentSchema();
-                const comment = await runAgent(schema, prompt); // Pass the updated caption
-                await commentBox.type(comment); // Replace with random comment
+                const result = await runAgent(schema, prompt);
+                const comment = result[0]?.comment;
+                await commentBox.type(comment);
 
-                const postButtonSelector = `${postSelector} div[role="button"]:not([disabled]):has-text("Post")`;
-                const postButton = await page.$(postButtonSelector);
+                // New selector approach for the post button
+                const postButton = await page.evaluateHandle(() => {
+                    const buttons = Array.from(document.querySelectorAll('div[role="button"]'));
+                    return buttons.find(button => button.textContent === 'Post' && !button.hasAttribute('disabled'));
+                });
+
                 if (postButton) {
                     console.log(`Posting comment on post ${postIndex}...`);
                     await postButton.click();
@@ -175,19 +183,17 @@ async function interactWithPosts(page: any) {
                 console.log("Comment box not found.");
             }
 
-            // Wait before moving to the next post (randomize between 5 and 10 seconds)
-            const delay = Math.floor(Math.random() * 5000) + 5000; // Random delay between 5 and 10 seconds
-            console.log(
-                `Waiting ${delay / 1000} seconds before moving to the next post...`
-            );
-            await page.waitForTimeout(delay);
+            // Wait before moving to the next post
+            const waitTime = Math.floor(Math.random() * 5000) + 5000;
+            console.log(`Waiting ${waitTime / 1000} seconds before moving to the next post...`);
+            await delay(waitTime);
 
             // Scroll to the next post
             await page.evaluate(() => {
                 window.scrollBy(0, window.innerHeight);
             });
 
-            postIndex++; // Move to the next post
+            postIndex++;
         } catch (error) {
             console.error(`Error interacting with post ${postIndex}:`, error);
             break;
@@ -195,7 +201,4 @@ async function interactWithPosts(page: any) {
     }
 }
 
-
-
 export { runInstagram };
-
